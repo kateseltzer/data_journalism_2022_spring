@@ -29,3 +29,10 @@ setwd("~/GitHub/data_journalism_2022_spring")
 install.packages("tidyverse")
 library(tidyverse)
 ```
+##count loans, arrange most to least
+ppp_maryland_loans %>%
+  group_by(project_county_name) %>%
+  summarise(
+    count_loans = n()
+  ) %>%
+  arrange(desc(count_loans))
