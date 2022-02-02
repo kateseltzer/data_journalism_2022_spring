@@ -36,3 +36,48 @@ ppp_maryland_loans %>%
     count_loans = n()
   ) %>%
   arrange(desc(count_loans))
+  
+##notes 2/1
+```{r}
+maryland_ppp %>%
+  select(loan_number, amount, payroll_proceed) %>%
+  #mutate(name_of_column = value)
+  mutate(
+  percent_payroll = payroll_proceed/amount
+)
+```
+
+```{r}
+#ordering
+maryland_ppp %>%
+  select(loan_number, amount, payroll_proceed) %>%
+  mutate(
+  percent_payroll = (payroll_proceed/amount)*100
+)  %>% arrange(desc(percent_payroll))
+```
+
+
+
+```{r}
+#introduction to contents of dataset
+head(maryland_ppp)
+summary(maryland_ppp)
+colnames(maryland_ppp)
+glimpse(maryland_ppp)
+```
+  
+```{r}
+# case_when example
+maryland_jobs_categories <- maryland_ppp %>%
+mutate(
+  jobs_retained_category = case_when(
+    jobs_retained < 10 ~ 'under_10',
+    jobs_retained >= 10 & jobs_retained < 25 ~ '10_to_25',
+    jobs_retained >= 50 & jobs_retained < 100 ~ '50_to_100',
+    jobs_retained >= 100 & jobs_retained < 250 ~ '100_to_250',
+    jobs_retained >= 250 & jobs_retained < 500 ~ '250_to_500',
+    jobs_retained == 500 ~ '500'
+  )
+)
+```
+
