@@ -80,4 +80,121 @@ mutate(
   )
 )
 ```
+##notes 2/8
+```{r}
+##save as itself, make id from number into character
+ppp_maryland_loans <- ppp_maryland_loans %>%
+  mutate(id = as.character(id))
+
+glimpse(ppp_maryland_loans)
+```
+
+```{r}
+##how to find a column where the value is NA (special value, if you use == it'll treat it as a character)
+ppp_maryland_loans %>%
+  group_by(forgiveness_date) %>%
+  summarise(
+    count=n()
+  ) %>%
+  filter(is.na(forgiveness_date)) %>%
+  arrange(desc(count))
+```
+
+```{r}
+##create new column to extract month and year from date_approved
+ppp_maryland_loans %>%
+  mutate(month_year_approved = floor_date(date_approved, "month")) %>%
+  group_by(month_year_approved) %>%
+   summarise(
+    count=n()
+  ) %>%
+  arrange(month_year_approved)
+```
+
+```{r}
+##find largest and smallest loans
+ppp_maryland_loans %>%
+  summarise(max_amount = max(amount),
+            min_amount= min(amount))
+```
+
+```{r}
+##janitor: cleans up code
+library(tidyverse)
+library(janitor)
+```
+
+```{r}
+# standardize column names
+# cleaning function
+cleaned_arnold_md_loans <- arnold_md_loans %>%
+  clean_names()
+
+# display the cleaned dataset
+cleaned_arnold_md_loans
+```
+
+
+```{r}
+#rename cleaned columns
+# cleaning function
+cleaned_arnold_md_loans <- arnold_md_loans %>%
+  clean_names() %>%
+  rename(id = x1_id)
+
+# display the cleaned dataset
+cleaned_arnold_md_loans
+```
+
+```{r}
+#change column data type to number
+cleaned_arnold_md_loans <- arnold_md_loans %>%
+  clean_names() %>%
+  rename(id = x1_id) %>%
+  mutate(amount = as.numeric(amount))
+
+
+# display the cleaned dataset
+cleaned_arnold_md_loans
+```
+
+```{r}
+# check for duplicate data
+cleaned_arnold_md_loans %>%
+  get_dupes()
+```
+
+```{r}
+# get rid of duplicate rows
+cleaned_arnold_md_loans <- arnold_md_loans %>%
+  clean_names() %>%
+  rename(id = x1_id) %>%
+  mutate(amount = as.numeric(amount)) %>%
+  distinct()
+
+
+# display the cleaned dataset
+cleaned_arnold_md_loans
+```
+
+```{r}
+#standardize zip codes
+
+cleaned_arnold_md_loans <- arnold_md_loans %>%
+  clean_names() %>%
+  rename(id = x1_id) %>%
+  mutate(amount = as.numeric(amount)) %>%
+  distinct() %>%
+  mutate(zip = str_sub(zip, start=1L, end=5L))
+#standardize capitalization
+  mutate(city = str_to_title(city))
+# fix misspellings
+  mutate(city = case_when(
+    city == "Anold" ~ "Arnold",
+    TRUE ~ city
+  ))
+
+# display the cleaned dataset
+cleaned_arnold_md_loans
+```
 
