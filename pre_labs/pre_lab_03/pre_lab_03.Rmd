@@ -401,7 +401,7 @@ cleaned_arnold_md_loans
 ### Task 16: Clean up city field more with case_when()
 **Task** Run the following codeblock to use case_when() to fix misspellings of Arnold in the "city" field using both the exact match method and the str_detect() method. How many mispellings of Arnold remain after running this code? Answer below. Add a description of what this code does to your reference notebook.
 **Answer**
-none
+none!
 ```{r}
 # cleaning function
 cleaned_arnold_md_loans <- arnold_md_loans %>%
