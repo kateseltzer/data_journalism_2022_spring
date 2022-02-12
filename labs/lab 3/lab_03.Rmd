@@ -72,21 +72,34 @@ Q2: Find the 5-digit ZIP code in West Virginia that had the highest total amount
 * How much of that loan was forgiven?
 * Which number is bigger, the loan amount or the forgiveness amount? Can you explain the discrepancy?
 
-A2:
+A2: Greenbrier Hotel Corporation received the largest loan amount ($8912202.00) in the ZIP code 24986.24986 is located primarily in Greenbrier County. All of the loan was forgiven -- forgiveness amount was bigger because interest on the loan was also forgiven.
 
 ```{r} 
 # Hint
 # First, create a dataframe that shows the top 5-digit ZIP code by total dollar amount
 cleaned_zips_wv <- wv_ppp_loans %>% 
 mutate(zip = str_sub(zip, start=1L, end=5L)) %>%
-  group_by(amount) %>% 
-  arrange(desc(amount))
-  
-  
-
-
-cleaned_zips_wv
+  group_by(zip) %>% 
+  summarise(
+    max_loan_amount = max(amount)
+  ) %>%
+  arrange(desc(max_loan_amount))
 # Second, use the top ZIP code to create a separate dataframe that shows the business with the biggest loan in that ZIP code.
+
+biz_in_zip <- wv_ppp_loans %>% 
+filter(zip=="24986") %>% 
+  mutate(zip = str_sub(zip, start=1L, end=5L)) %>% 
+  group_by(name) %>%
+ summarise(
+    amount
+  ) %>% 
+  arrange(desc(amount))
+ 
+  
+
+
+biz_in_zip
+
 
 ```
 
@@ -111,12 +124,26 @@ Some hints to help you answer this question:
 * When you examine the disclosure forms, there may be lots of stock sales and retirement accounts mixed in.  Ignore those. In the table in the disclosure forms, look for "Partnership" or "C-Corp" in the column named "Income Type"
 * This is a link to details on passage of the [CARES ACT](https://www.congress.gov/bill/116th-congress/house-bill/748). You can find a link to how the House voted by clicking on a link from [this page](https://www.congress.gov/bill/116th-congress/house-bill/748/actions).
 
-A3:
+A3: The business names are Dutch Miller of Chevrolet, Dutch Miller of Charleston, Dutch Miller of Charlotte, Dutch Miller Subaru, and DM Motors. The businesses are car dealerships. In total, they received $3,105,300.98.8% of the loans have been forgiven. Carol Miller voted yes on the passage of the CARES Act.She also sponsored the Employee Retention Tax Credit (ERTC) Reinstatement Act.
 
 ```{r}
 
 # Hint
 # First, create a dataframe that only has loans to those five companies
 # Second, use that newly created dataframe to calculate total loan amount and percentage forgiven for those companies
+politician_biz <- wv_ppp_loans %>% 
+  filter(
+    str_detect(name,"^DUTCH M|^DM M")
+  )
+
+politician_biz %>% 
+  summarise(total_amount=sum(amount),total_forgiven=sum(forgiveness_amount)) %>% 
+  
+  mutate(percentage_forgiven=(total_amount/total_forgiven)*100)
+  
+  
+
+
+  
 
 ```
