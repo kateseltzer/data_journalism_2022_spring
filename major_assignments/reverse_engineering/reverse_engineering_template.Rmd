@@ -1,7 +1,7 @@
 ---
 title: "Reverse Engineering Project"
-author: "Student names here"
-date: "Date here"
+author: "Kate Seltzer and Mike Charles"
+date: "March 5"
 output:
   html_document:
     theme: cerulean
@@ -18,13 +18,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction 
 
-In this notebook, we are reverse engineering the story, [STORY NAME](STORY URL)
+In this notebook, we are reverse engineering the story, [Over a Dozen Black and Latino Men Accused a Cop of Humiliating, Invasive Strip Searches. The NYPD Kept Promoting Him.](https://www.propublica.org/article/over-a-dozen-black-and-latino-men-accused-a-cop-of-humiliating-invasive-strip-searches-the-nypd-kept-promoting-him)
 
 ## Load libraries
 
 Loading required libraries for this analysis.
 
 ```{r echo=FALSE, message=FALSE}
+library(tidyverse)
+library(stringr)
 
 ```
 
@@ -38,6 +40,7 @@ In this section, describe the source of the data, write a basic data dictionary 
 # Path to data should be loaded from folder "data" i.e. read_csv("data/name_of_data.csv")
 
 # Clean required data and prepare for analysis if needed. 
+ccrb_complaints <- read_csv("data/allegations.csv")
 
 
 ```
@@ -47,12 +50,17 @@ In this notebook, we are reverse engineering five sentences from the story.
 
 ### Sentence 1
 
-* **Sentence text**: [Paste in sentence to engineer here]
-* **Analysis summary**: [Write up two to three sentences describing the results of your analysis.  Were you able to confirm the finding? If not, why not?]
+* **Sentence text**: “A dozen of those high-ranking officers have three or more complaints with substantiated allegations; 10 are white. Five have reached the rank of deputy inspector, the lowest promoted at the commissioner’s discretion; all are white.”
+* **Analysis summary**: This anaylsis found nine high-ranking officers with three or more substantiated complaints.
 
 ```{r}
 # Put code to reverse engineer sentence here
-
+ccrb_complaints %>% 
+filter(rank_now =="Chiefs and other ranks") %>% 
+filter(str_detect(board_disposition, "^Subst")) %>%
+group_by(first_name, last_name) %>% 
+summarise(count=n())%>% 
+arrange(desc(count))
 # Display results of code below this codeblock
 
 ```
