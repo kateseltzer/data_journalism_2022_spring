@@ -101,7 +101,7 @@ for(row_number in 1:nrow(approved_loans_by_state)){
 
 
 url <- each_row_df$state_page_link
-print(approved_loans_by_state)
+print(url)
 
  
 }
