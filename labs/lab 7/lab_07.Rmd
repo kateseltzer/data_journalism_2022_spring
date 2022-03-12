@@ -98,11 +98,13 @@ state_loans <- tibble()
 for(row_number in 1:nrow(approved_loans_by_state)){
    each_row_df <- approved_loans_by_state %>%
       slice(row_number)
-}
+
 
 url <- each_row_df$state_page_link
+
 
  states_one_at_a_time <- url %>%
       read_html() %>%
       html_table()
+}
 ```
