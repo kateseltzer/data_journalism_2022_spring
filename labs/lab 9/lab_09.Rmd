@@ -104,14 +104,16 @@ all_state_ppp %>%
   group_by(loans_per_1000000) %>% 
   arrange(desc(loans_per_1000000)) %>% 
   head(10)
-```
 
-
-```{r}
 all_state_ppp %>% 
   ggplot() +
   geom_bar(aes(x=reorder(state,total_ppp_loans), weight=total_ppp_loans)) +
   coord_flip()
+```
+
+
+```{r}
+
   
 
 ```
