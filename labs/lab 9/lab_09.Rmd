@@ -96,19 +96,30 @@ total_pop_by_state <- get_acs(geography = "state",
               variables = c(pop = "B01001_001"),
               year = 2019) %>% 
   rename(state=NAME)
+  
 
-all_state_ppp %>% 
+all_state_ppp <- all_state_ppp %>%
+  mutate(state = case_when(
+    state =="N Dakota"~"North Dakota",
+    state =="S Dakota"~"South Dakota",
+    TRUE~ state
+  ))
+ppp_and_pop <- all_state_ppp %>% 
   inner_join(total_pop_by_state, by=c("state")) %>% 
-  mutate(pop_per_100000=(estimate/100000)) %>% 
-  mutate(loans_per_1000000=(total_ppp_loans/pop_per_100000)) %>% 
-  group_by(loans_per_1000000) %>% 
-  arrange(desc(loans_per_1000000)) %>% 
+  mutate(loans_per_100000=(total_ppp_loans/estimate*100000)) %>% 
+  arrange(desc(loans_per_100000)) %>% 
   head(10)
 
-all_state_ppp %>% 
+ppp_and_pop %>% 
   ggplot() +
-  geom_bar(aes(x=reorder(state,total_ppp_loans), weight=total_ppp_loans)) +
-  coord_flip()
+  geom_bar(aes(x=reorder(state,loans_per_100000), weight=loans_per_100000), fill="#0000FF") +
+  coord_flip() + 
+  labs(
+    title="PPP Loans per 100,000 People",
+    x = "Number of loans",
+    y = "State"
+    )
+   
 ```
 
 
@@ -120,6 +131,16 @@ all_state_ppp %>%
 
 
 **A2.** 
+South Dakota
+North Dakota
+Nebraska
+Georgia
+Iowa
+Illinois
+Louisiana
+Florida
+Mississippi
+Montana
 
 **Q3.**  A scatterplot is a type of chart that helps us see relationships between two variables. One variable goes on the x axis, the other on the y axis.  For each row/observation in our data, a scatterplot puts a circle (or a "point") where the two variables intersect on a grid. 
 
@@ -143,7 +164,17 @@ To answer those questions, make a codeblock and do the following:
 ```{r}
 wv_ppp_all <- read_rds("data/lab_09.rds") %>% 
   filter(amount<25000) %>% 
-  replace()
+  mutate(forgiveness_amount = case_when(
+    is.na(forgiveness_amount) ~ 0,
+    TRUE ~ forgiveness_amount
+  )) %>% 
+  ggplot() + 
+  geom_point(
+    mapping = aes(x = amount, y = forgiveness_amount)
+  )
+
+
+
 
 
 wv_ppp_all
@@ -151,6 +182,6 @@ wv_ppp_all
 
 
 **A3.**  
-
+Generally shows that as the loan amount increases, the amount forgiven also increases. With some outliers, it looks like many loans were totally forgiven.
 
 -30-
