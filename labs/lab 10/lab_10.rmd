@@ -126,8 +126,9 @@ kabbage_counties <- read_csv("data/kabbage_counties.csv")
 all_counties <- read_csv("data/all_counties.csv")
 
 kabbage_plus_all <- all_counties %>% 
-  inner_join(kabbage_counties, by=c('project_county_name')) %>% 
-  rename(total_loans=total.x, kabbage_loans=total.y, match_county=project_county_name, state=project_state.x) %>% mutate(percentage_kabbage=(kabbage_loans/total_loans)*100)
+  inner_join(kabbage_counties, by=c('project_county_name', 'project_state')) %>% 
+  rename(total_loans=total.x, kabbage_loans=total.y, match_county=project_county_name, state=project_state) %>% 
+  mutate(percent_kabbage=(kabbage_loans/total_loans)*100)
 
 county_fips <- read_csv("data/county_fips.csv")
 
@@ -136,9 +137,16 @@ kabbage_and_fips <- kabbage_plus_all %>%
   view(kabbage_and_fips)
 
 write_csv(kabbage_and_fips, "data/kabbage_and_fips.csv")
+   
+
+
+
 
 ```
 
 8. In the answer space below, provide the URL for your published map and then describe where Kabbage loans are and are not found. Where are they more common? Look specifically at Florida in the data: are there counties on the map where no data is displayed? Why?
 
 **A3.**  
+[https://datawrapper.dwcdn.net/SwW1u/1/]
+
+Kabbage loans seem to be concentrated mostly in the southeast, with a decent number along the west coast as well. Florida seemed to have the largest concentration of loans. There only seems to be one county in Florida with no data displayed -- it looks like no loans were issued at all in that county.
