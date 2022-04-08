@@ -127,12 +127,12 @@ all_counties <- read_csv("data/all_counties.csv")
 
 kabbage_plus_all <- all_counties %>% 
   inner_join(kabbage_counties, by=c('project_county_name')) %>% 
-  rename(total_loans=total.x, kabbage_loans=total.y) %>% mutate(percentage_kabbage=(kabbage_loans/total_loans)*100)
+  rename(total_loans=total.x, kabbage_loans=total.y, match_county=project_county_name, state=project_state.x) %>% mutate(percentage_kabbage=(kabbage_loans/total_loans)*100)
 
 county_fips <- read_csv("data/county_fips.csv")
 
 kabbage_and_fips <- kabbage_plus_all %>% 
-   left_join(county_fips, by=c('project_county_name'='match_county'))
+   left_join(county_fips, by=c('match_county', 'state'))
   view(kabbage_and_fips)
 
 write_csv(kabbage_and_fips, "data/kabbage_and_fips.csv")
