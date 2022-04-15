@@ -50,7 +50,7 @@ Then answer these questions:
 * Based on the table, what county got the highest total loan amount? What was the total amount per 100K population, the total amount of loans (not population adjusted), how many loans were there, and what's the population?
 
 ```{r}
-wv_ppp %>% 
+wv_ppp <- wv_ppp %>% 
   filter(str_detect(naics_code, "^21")) %>% 
   group_by(project_county_name) %>% 
   summarise(count=n()) 
