@@ -53,7 +53,7 @@ Then answer these questions:
 wv_ppp <- wv_ppp %>% 
   filter(str_detect(naics_code, "^21")) %>% 
   group_by(project_county_name) %>% 
-  summarise(count=n()) 
+  summarise(amount=sum(amount))
 
 wv_county_population <- get_acs(geography = "county", 
               variables = c(population = "B01001_001"), 
@@ -67,11 +67,21 @@ wv_county_population <- wv_county_population %>%
   rename(population = estimate) %>%
   select(project_county_name, population, geometry)
 
-wv_pop_and_ppp <- wv_ppp %>%  left_join(wv_county_population, by = c("project_county_name")) %>% 
-  mutate(amount_per_100k=amount/population*100000) %>%
-  group_by(project_county_name) %>% 
-  summarise(count=n()) %>% 
-  arrange(desc(amount_per_100k)) 
+wv_pop_and_ppp <- wv_ppp %>%  left_join(wv_county_population, by = c("project_county_name"))%>% 
+  mutate(amount_per_100k=amount/population*100000) %>% 
+  arrange(desc(amount_per_100k)) %>% 
+  mutate(total_amount_loans=sum(amount))
+
+wv_counties <- counties() %>% 
+  filter(STATEFP == "54") %>% 
+  ggplot() + 
+  geom_sf() + 
+  geom_sf() +
+  theme_minimal()
+  
+  
+
+
 ```
 
 
@@ -93,7 +103,7 @@ What spatial pattern do you see? How does it compare to the spatial pattern in t
 mine_permits <- st_read("https://tagis.dep.wv.gov/arcgis/rest/services/WVDEP_enterprise/mining_reclamation/MapServer/0/query?where=1%3D1&outFields=*&geometry=&geometryType=esriGeometryEnvelope&inSR=4326&spatialRel=esriSpatialRelIntersects&outSR=4326&f=json")
 
 mine_permits %>% 
-  as.Date(c(expiredate))
+  ymd("expiredate"))
   
 
 
