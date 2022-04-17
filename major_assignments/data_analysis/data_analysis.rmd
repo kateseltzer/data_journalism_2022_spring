@@ -21,6 +21,8 @@ board_games_20 <- read_csv("2020.csv")
 board_games_21 <- read_csv("2021.csv")
 
 detailed_games <- read_csv("games_detailed_info.csv")
+
+bgg_15 <- read_csv("bgg-15m-reviews.csv")
 ```
 ##About the data
-We've created two dataframes that contain board game rankings from 2020 and 2021. They each contain the game ranking, its average score, and the year it came out. Other data available describes the games in detail, including a brief summary of the game itself. That last set will allow us to find patterns in games based on their genre.
+We've created two dataframes that contain board game rankings from 2020 and 2021. They each contain the game ranking, its average score, and the year it came out. Other data available describes the games in detail, including a brief summary of the game itself. That last set will allow us to find patterns in games based on their genre. The dataframes based on 2020 and 2021 have 10 columns and 19,330 and 21,831 rows respectively -- off the bat we should be mindful of that and know it won't be a perfect comparison between two years. Although there's some basis for comparison, because we don't have access to many years before the pandemic, it might be difficult to answer the question about how COVID-19 has impacted game choice. We also have the data for specific game reviews -- literal comments people have left about the games. That's maybe not the most helpful from a data anaylsis perspective, but once we have more information about which games are popular, it would be helpful to have that anecdotal evidence to determine why.
