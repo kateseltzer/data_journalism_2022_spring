@@ -1,0 +1,26 @@
+---
+title: "data analysis"
+author: "Kate Seltzer and Mike Charles"
+date: "4/16/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+```
+
+##Read in data
+```{r}
+board_games_20 <- read_csv("2020.csv")
+
+board_games_21 <- read_csv("2021.csv")
+
+detailed_games <- read_csv("games_detailed_info.csv")
+```
+##About the data
+We've created two dataframes that contain board game rankings from 2020 and 2021. They each contain the game ranking, its average score, and the year it came out. Other data available describes the games in detail, including a brief summary of the game itself. That last set will allow us to find patterns in games based on their genre.
