@@ -119,8 +119,10 @@ non_md_vax <- vax %>%
   arrange(desc(FullyVaccinated)) %>% 
   head(25)
 
-write_csv(maryland_zips_yyyymmdd.csv, paste(tzone))
-write_csv(non_maryland_zips_yyyymmdd.csv, paste, tzone))
+
+write_csv(md_vax, paste("md_vax", today(), ".csv"))
+          
+write_csv(non_md_vax, paste("non_md_vax", today(), ".csv"))
   
   
 
@@ -157,9 +159,14 @@ md_zips_and_vax <- md_vax_again %>%
   inner_join(md_zips, by=c("zip")) %>% 
   mutate(percent_vaxxed = (FullyVaccinated/estimate)*100)
 
+counties <- counties()
+md_counties <- counties %>%
+  filter(STATEFP == "24")
 
-ggplot() +
-  geom_sf(data=md_zips_and_vax, aes(fill=percent_vaxxed)) +
-  scale_fill_viridis_c(option = "plasma", trans = "sqrt") +
-  theme_void() 
+ggplot() + 
+  geom_sf(data=md_counties)  
+  geom_sf(data=md_zips_and_vax) 
+aes(fill=percent_vaxxed) + 
+  theme_minimal() +
+  scale_fill_viridis_b(option="magma",trans = "log")
 ```
