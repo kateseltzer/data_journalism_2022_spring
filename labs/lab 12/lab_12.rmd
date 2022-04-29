@@ -98,6 +98,7 @@ To do that, you will need to:
 Google the top 2-3 zip codes from both Maryland and non-Maryland results and describe them in your answer.
 
 **A2.**
+20906 is in Silver Spring (that's where I live!). It's majority Hispanic and the median household income is $65452. 20878 is mostly in Montgomery County, it's majority white and the median household income is $109837.
 
 ```{r}
 vax <- read_csv("https://raw.githubusercontent.com/state-of-maryland/VaccineCSVs/master/Vax_ZIP_CODE_FirstSecondSingle_Totals_Raw.csv")  
@@ -139,6 +140,7 @@ You WILL need to ensure that the columns you use to join the two dataframes are 
 Describe the output of the map below, and say what you think the most interesting areas are.
 
 **A3.**
+The map shows highlighted counties mostly around the edge of the state. I'd be interested in looking at some of the small filled in areas are in the center.
 
 ```{r}
 all_zips <- get_acs(geography = "zcta",
@@ -147,7 +149,7 @@ all_zips <- get_acs(geography = "zcta",
 
 md_zips <- all_zips %>% 
   rename(zip = GEOID) %>% 
-  filter(zip >= 20588 & zip <= 21930)
+  filter(zip >= 20588 & zip <= 21930) 
 
 md_vax_again <- vax %>% 
   mutate(todays_date=today(tzone = "EST")) %>%
@@ -157,7 +159,8 @@ md_vax_again <- vax %>%
   
 md_zips_and_vax <- md_vax_again %>% 
   inner_join(md_zips, by=c("zip")) %>% 
-  mutate(percent_vaxxed = (FullyVaccinated/estimate)*100)
+  mutate(percent_vaxxed = (FullyVaccinated/estimate)*100) %>% 
+  filter(percent_vaxxed>50)
 
 counties <- counties()
 md_counties <- counties %>%
@@ -165,8 +168,8 @@ md_counties <- counties %>%
 
 ggplot() + 
   geom_sf(data=md_counties)  
-  geom_sf(data=md_zips_and_vax) 
-aes(fill=percent_vaxxed) + 
+  geom_sf(data=md_zips_and_vax, 
+aes(fill=percent_vaxxed)) + 
   theme_minimal() +
   scale_fill_viridis_b(option="magma",trans = "log")
 ```
