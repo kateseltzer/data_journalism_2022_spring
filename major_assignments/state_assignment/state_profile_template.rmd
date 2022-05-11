@@ -1,0 +1,253 @@
+---
+title: "state_profile"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(scipen=999)
+```
+
+## PPP State Profile
+
+Your assignment is to explore a dataset of PPP loan applications for a particular state and to answer a series of questions that will help you summarize that state's loan applications. You will need to write R code to answer those questions. You also will bring in other data, including Census information, and you will be making graphics, including maps, to illustrate your findings.
+
+The deliverable will be this R Markdown notebook and a data folder that you will receive with a state's loan application data. Place any other data you are using to answer the questions in the same data folder.
+
+## Load libraries and establish settings
+
+**Task** Create a codeblock and load appropriate packages and settings for this assignment.
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(lubridate)
+library(ggrepel)
+library(sf)
+library(tigris)
+library(tidycensus)
+
+```
+
+
+## Initial Exploration
+
+**Q1.**. Write R code that generates some basic descriptive statistics that allows you to describe the applications from your state. This code should produce results that describe the data in different ways: how many applications there are, along with ways to understand the typical and most frequent values for columns you find interesting or newsworthy. You should produce at least five (5) descriptive statistics and write up a summary of the data using them.
+
+```{r}
+virginia_ppp <- read_csv("C:\\Users\\kates\\Downloads\\virginia_ppp.csv.zip")
+
+unique_cities <- virginia_ppp %>% 
+  distinct(city) %>% 
+  write_csv("unique_cities.csv")
+
+unique_counties <- virginia_ppp %>% 
+  distinct(project_county_name) %>% 
+  write_csv("unique_counties.csv")
+
+counties_clean <- read_csv("C:\\Users\\kates\\Downloads\\unique_counties_clean.csv")
+
+virginia_ppp <- virginia_ppp %>% 
+  mutate(project_county_name = str_to_title(project_county_name)) 
+  
+```
+
+
+```{r}
+#county with most loans
+virginia_ppp %>%
+  group_by(project_county_name) %>%
+  summarise(
+    count_loans = n()
+  ) %>%
+  arrange(desc(count_loans))
+
+```
+##counties with the most loans: Fairfax, Loudoun, VA Beach, Prince William, Henrico, Chesterfield, Alexandria, Richmond, Arlington, Norfolk
+
+Q: is it weird Richmond is lower on that list?
+
+#counties with least loans: 
+
+```{r}
+virginia_ppp %>% 
+  filter(amount==10000000)
+```
+17 companies received max amount of $10,000,000
+
+```{r}
+virginia_ppp %>%
+  group_by(project_county_name) %>%
+  summarise(
+    count_loans = n(),
+    total_loans_amount = sum(amount),
+    mean_loan_amount = mean(amount),
+    median_loan_amount = median(amount),
+    min_loan_amount = min(amount),
+    max_loan_amount = max(amount)
+  ) %>%
+  arrange(desc(max_loan_amount))
+  saveRDS(data,file="va_summary.rds")
+```
+```{r}
+va_loan_amounts <- virginia_ppp %>%
+mutate(
+  loan_amounts = case_when(
+    amount < 10000 ~ 'under_10k',
+    amount >= 10000 & amount < 50000 ~ '10k_to_50k',
+    amount >= 50000 & amount < 100000 ~ '50k_to_100k',
+    amount >= 100000 & amount < 500000 ~ '100k_to_500k',
+    amount >= 500000 & amount < 1000000 ~ '500k_to_1m',
+    amount >= 1000000 ~ '1m_plus'
+  )
+)%>%
+ group_by(loan_amounts) %>%
+  summarise(total = n())
+```
+
+```{r}
+va_jobs_retained <- virginia_ppp %>%
+filter(jobs_retained == 500) 
+```
+
+```{r}
+cleaned_zips_va <- virginia_ppp %>% 
+mutate(zip = str_sub(zip, start=1L, end=5L)) %>%
+  group_by(zip) %>% 
+  summarise(
+    max_loan_amount = max(amount)
+  ) %>%
+  arrange(desc(max_loan_amount))
+```
+
+
+
+**A1.** 
+
+
+## Geographic Analysis
+
+**Q2.** Write R code that examines geographic patterns for PPP loans in your state, using Census population information to calculate a per-capita figure for the state and counties and zip codes. Then, make a county map using ggplot showing the per-capita data and a zip code map showing the difference from the statewide per-capita figure. Describe the most interesting or newsworthy findings based on your exploration.
+
+```{r}
+acs_variables <- load_variables(2019, "acs5", cache=TRUE)
+
+va_state_pop <- get_acs(geography = "state",
+              variables = c(population = "B01001_001"), 
+              state = "VA", 
+              year = 2019)
+
+va_ppp_per_hundred_thousand <- va_state_pop %>% 
+  left_join(virginia_ppp,by=c())
+
+va_county_pop <- get_acs(geography = "county",
+              variables = c(population = "B01001_001"),
+              state = "VA",
+              year = 2019)
+
+va_pop_by_zip <- get_acs(geography = "zcta",
+              variables = c(totalpop = "B01003_001"),
+              year = 2019) %>% 
+  rename(pop_by_zip=estimate)
+
+
+```
+
+
+**A2.** 
+
+## Lender Analysis
+
+**Q3.** Write R code to examine which lenders had the most approved applications in your state (and include summary statistics such as total amount and average loan amount). Generate dataframes that show the number and total amount of all loans and undisbursed loans per lender. For those lenders who had any undisbursed loans, make a graphic showing the relationship between the total amount of loans and the total undisbursed amount. Describe the most noticeable outlier lenders on that graphic below.
+
+```{r}
+va_lenders <- virginia_ppp %>% 
+  group_by(lender) %>% 
+  summarise(count=n(),
+            sum_amount = sum(amount),
+            mean_amount = mean(amount)) %>% 
+  arrange(desc(count))
+
+va_undisbursed <- virginia_ppp %>% 
+  filter(undisbursed_amount>0)
+
+loan_amts_and_lenders <- virginia_ppp %>% 
+  mutate(
+  loan_amounts = case_when(
+    amount < 10000 ~ 'under_10k',
+    amount >= 10000 & amount < 50000 ~ '10k_to_50k',
+    amount >= 50000 & amount < 100000 ~ '50k_to_100k',
+    amount >= 100000 & amount < 500000 ~ '100k_to_500k',
+    amount >= 500000 & amount < 1000000 ~ '500k_to_1m',
+    amount >= 1000000 ~ '1m_plus'
+  )) %>% 
+  group_by(lender, loan_amounts) %>% 
+  summarise(count=n(),
+            sum_amount=sum(amount),
+            mean_amount=mean(amount)) %>% 
+  arrange(desc(count))
+
+loan_amts_and_lenders %>% 
+  ggplot() + 
+  geom_point(
+    mapping = aes(x = loan_amounts, y = count)
+  )
+
+
+
+  
+```
+
+
+**A3.** 
+
+
+
+
+## Industry Analysis
+
+**Q4.** Write R code that examines industry patterns for PPP loans in your state, using the NAICS codes from the PPP data as a starting point. Generate statewide and county industry totals, then join that with 2018-19 data from the [Census County Business Patterns survey](https://www2.census.gov/programs-surveys/cbp/datasets/2019/cbp19co.zip) using 6-digit NAICS codes. The documentation explaining that data can be found here: https://www2.census.gov/programs-surveys/cbp/technical-documentation/records-layouts/2018_record_layouts/county-layout-2018.txt. To do this, you will need to add FIPS codes to your PPP dataset.
+
+```{r}
+naics_codes <- read_csv("C:\\Users\\kates\\OneDrive\\Documents\\GitHub\\data_journalism_2022_spring\\major_assignments\\state_assignment\\data\\naics_codes.csv")
+
+virginia_ppp_with_naics <- virginia_ppp %>% left_join(naics_codes, by="naics_code") %>% 
+  mutate(zip5 = str_sub(zip, start=1L, end=5L))
+
+all_fips <- fips_codes %>% as_tibble()
+
+va_fips <- all_fips %>% 
+  filter(state == 'VA') %>% 
+  mutate(county = str_to_title(county)) %>% 
+  mutate(county = str_remove_all(county, "County"))
+
+fips_and_naics <- virginia_ppp_with_naics %>% 
+  rename(county = project_county_name) %>% 
+  inner_join(va_fips, by=c("county")) %>% 
+  group_by(county, title) %>% 
+  summarise(total=n()) %>% 
+  arrange(desc(total))
+
+
+  
+
+
+
+
+```
+
+
+Does the distribution of PPP applications by the top 10 industries (by number of applications) roughly match the number of businesses reported in the Census data? Does it roughly match if you remove self-employed individuals and sole proprietorships from the PPP totals? Write up a summary of what you've found and whether there are potentially newsworthy patterns in the data.
+
+Create a county-level map showing the differences between the PPP applications and the Census business data for one of the top 10 industry codes. You can do this either using ggplot or Datawrapper (if the latter, publish that map and include the URL below).
+
+
+
+**A4.** 
+
+
+## Summary
+
+**Q5.** What is the most promising story idea that you have found during this exploration? How would you approach reporting it out and what other information/data would you need to do that? What would be the minimum story you could get from this, and what would be the maximum story?
+
+**A5.**
