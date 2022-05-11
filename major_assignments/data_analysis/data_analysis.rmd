@@ -120,7 +120,7 @@ twilightimperium_comments <- bgg_19 %>%
 
 ```
 
-We then switched out attention from the games themselves to the individuals playing said games and leaving reviews. We filtered all users and found the average rating they gave certain games to determine if certain users were prone to more positive or negative reviews. We also counted how many reviews each specific user gave. The average rating by all of the users who left 100 or more reviews was 10. This reality shows that these users are actually giving thought to the ratings that they give, likely basing it on a set of criteria that they put together. In order to learn more, we reached out to an individual with a lot of reviews to attempt to understand their thought process. However, the user declined to comment on the subject. We thought this would shed light upon how much thought goes into each review, why reviews were given and why users feel the need to leave comments. This could even be used as a seg-way into a general story on reviews, their intentions and the thought process. 
+We then switched out attention from the games themselves to the individuals playing said games and leaving reviews. We filtered all users and found the average rating they gave certain games to determine if certain users were prone to more positive or negative reviews. We also counted how many reviews each specific user gave. The average rating by all of the users who left 100 or more reviews was 10. This reality shows that these users are actually giving thought to the ratings that they give, likely basing it on a set of criteria that they put together. In order to learn more, we reached out to an individual with a lot of reviews to attempt to understand their thought process. However, the user did not respond. We thought this would shed light upon how much thought goes into each review, why reviews were given and why users feel the need to leave comments. This could even be used as a segue into a general story on reviews, their intentions and the thought process. 
 
 **some analysis about user reviews
 
@@ -141,7 +141,12 @@ users_19 <- bgg_19%>%
   arrange(desc(reviews)) %>% 
   head(10)
 
+user_avg <- users_19 %>%
+  summarise(avg = mean(avg_rating), avg_reviews =mean(reviews))
+
 ```
+
+This block of code gave insight into the average rating and the average number of reviews for the top 10 review leavers. It shows how prolific they were with the amount of reviews and how seriously they took these reviews.
 
 Analyzing this data, it became clear that there are several different interesting, engaging story ideas woven into these statistics. First, a story we would be interested in is a profile of a user leaving a prolific amount of reviews. It would be engaging for the reader to learn who such individuals are, why they are so passionate about games and reviews and how it has shaped their life. Without such stories, all reviews writers are just usernames on a screen, but that does not fill the full story. 
 
