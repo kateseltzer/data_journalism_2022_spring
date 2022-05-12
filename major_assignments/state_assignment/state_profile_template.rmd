@@ -133,22 +133,37 @@ mutate(zip = str_sub(zip, start=1L, end=5L)) %>%
 acs_variables <- load_variables(2019, "acs5", cache=TRUE)
 
 va_state_pop <- get_acs(geography = "state",
-              variables = c(population = "B01001_001",
+              variables = c(population = "B01001_001"),
               state = "VA", 
               year = 2019,
-              geometry=TRUE)) %>% 
+              geometry=TRUE) %>% 
   filter(NAME == "Virginia") %>% 
-  rename(state == NAME)
+  rename(state = NAME) %>% 
+  mutate(state = str_replace(state, "Virginia", "VA"))
 
-state_pop_and_ppp <- va_state_pop %>% 
-  left_join(virginia_ppp, by=c()
-
-va_county_pop <- get_acs(geography = "county",
-              variables = c(population = "B01001_001",
+state_pop_and_ppp <- virginia_ppp %>%
+  left_join(va_state_pop, by="state") %>%
+  group_by(estimate) %>% 
+  summarise(count=n()) %>% 
+  mutate(per_capita=count/estimate)
+  
+  
+ va_county_pop <- get_acs(geography = "county",
+              variables = c(population = "B01001_001"),
               state = "VA",
               year = 2019,
-              geometry=TRUE))
-
+              geometry=TRUE) %>% 
+   rename(project_county_name = NAME) %>% 
+   mutate(project_county_name = str_to_title(project_county_name)) %>% 
+   mutate(project_county_name = str_remove(project_county_name, "County, Virginia" )) %>% 
+   mutate(project_county_name = str_remove(project_county_name, ", Virginia"))
+ 
+ county_pop_and_ppp <- va_county_pop %>% 
+     left_join(virginia_ppp, by="project_county_name") %>%
+   drop_na(amount) %>% 
+   select(estimate,geometry) %>% 
+   summarise(count=n())
+ 
 va_pop_by_zip <- get_acs(geography = "zcta",
               variables = c(totalpop = "B01003_001",
               year = 2019,
