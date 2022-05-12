@@ -55,7 +55,7 @@ virginia_ppp <- virginia_ppp %>%
 
 ```{r}
 #county with most loans
-virginia_ppp %>%
+va_county_ppp <- virginia_ppp %>%
   group_by(project_county_name) %>%
   summarise(
     count_loans = n()
@@ -71,9 +71,16 @@ Q: is it weird Richmond is lower on that list?
 
 ```{r}
 virginia_ppp %>% 
-  filter(amount==10000000)
+  filter(amount==10000000) %>% 
+  group_by(project_county_name) %>% 
+  summarise(count=n()) %>% 
+  arrange(desc(count))
 ```
 17 companies received max amount of $10,000,000
+```{r}
+virginia_ppp %>% 
+  filter(project_county_name=="Richmond City" & amount==10000000 )
+```
 
 ```{r}
 virginia_ppp %>%
@@ -120,10 +127,16 @@ mutate(zip = str_sub(zip, start=1L, end=5L)) %>%
   arrange(desc(max_loan_amount))
 ```
 
+```{r}
+va_cong_district <- virginia_ppp %>% 
+  group_by(congressional_district) %>%
+  summarise(count=n()) %>% 
+  arrange(desc(count)) 
+```
 
 
 **A1.** 
-
+In Virginia, the counties that received the greatest number of loans included Fairfax, Loudoun, Virginia Beach City, Prince William, Henrico, Chesterfield, Alexandria City, Richmond City, Arlington, and Norfolk City. There were 17 companies that received the maximum PPP loan amount of $10,000,000. Four companies in Fairfax County and Henrico County received that full $10 million.  
 
 ## Geographic Analysis
 
@@ -147,8 +160,7 @@ state_pop_and_ppp <- virginia_ppp %>%
   summarise(count=n()) %>% 
   mutate(per_capita=count/estimate)
   
-  
- va_county_pop <- get_acs(geography = "county",
+va_county_pop <- get_acs(geography = "county",
               variables = c(population = "B01001_001"),
               state = "VA",
               year = 2019,
@@ -159,10 +171,8 @@ state_pop_and_ppp <- virginia_ppp %>%
    mutate(project_county_name = str_remove(project_county_name, ", Virginia"))
  
  county_pop_and_ppp <- va_county_pop %>% 
-     left_join(virginia_ppp, by="project_county_name") %>%
-   drop_na(amount) %>% 
-   select(estimate,geometry) %>% 
-   summarise(count=n())
+     left_join(va_county_ppp, by="project_county_name") 
+   
  
 va_pop_by_zip <- get_acs(geography = "zcta",
               variables = c(totalpop = "B01003_001",
