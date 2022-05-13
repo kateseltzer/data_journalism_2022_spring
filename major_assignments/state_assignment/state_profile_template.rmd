@@ -167,19 +167,37 @@ va_county_pop <- get_acs(geography = "county",
               geometry=TRUE) %>% 
    rename(project_county_name = NAME) %>% 
    mutate(project_county_name = str_to_title(project_county_name)) %>% 
-   mutate(project_county_name = str_remove(project_county_name, "County, Virginia" )) %>% 
+   mutate(project_county_name = str_remove(project_county_name, " County, Virginia" )) %>% 
    mutate(project_county_name = str_remove(project_county_name, ", Virginia"))
  
  county_pop_and_ppp <- va_county_pop %>% 
-     left_join(va_county_ppp, by="project_county_name") 
-   
+     left_join(va_county_ppp, by="project_county_name") %>%
+   mutate(per_capita=count_loans/estimate)
  
-va_pop_by_zip <- get_acs(geography = "zcta",
-              variables = c(totalpop = "B01003_001",
-              year = 2019,
-              geometry=TRUE)) %>% 
-  rename(pop_by_zip=estimate)
+ggplot() + 
+geom_sf(data=county_pop_and_ppp, aes(fill=per_capita)) + 
+theme_minimal()+
+scale_fill_viridis_b(option="magma",trans = "log")
 
+virginia_ppp <- virginia_ppp %>% 
+ mutate(zip5=str_sub(zip, start=1L, end=5L))
+   
+va_pop_by_zip <- get_acs(geography = "zcta",
+              variables = c(totalpop = "B01001_001"),
+              year = 2019,
+              geometry=TRUE) %>% 
+  rename(pop_by_zip=estimate) %>% 
+  rename(zip5=GEOID)
+
+va_zip_ppp <- virginia_ppp %>% 
+  group_by(zip5) %>% 
+  summarise(count=n()) %>% 
+  arrange(desc(count))  
+
+
+zip_and_ppp <- va_pop_by_zip %>% 
+  left_join(va_zip_ppp, by="zip5")
+  
 
 ```
 
@@ -242,11 +260,13 @@ loan_amts_and_lenders %>%
 naics_codes <- read_csv("C:\\Users\\kates\\OneDrive\\Documents\\GitHub\\data_journalism_2022_spring\\major_assignments\\state_assignment\\data\\naics_codes.csv")
 
 virginia_ppp_with_naics <- virginia_ppp %>% left_join(naics_codes, by="naics_code") %>% 
-  mutate(zip5 = str_sub(zip, start=1L, end=5L)) %>% 
-  group_by(title) %>% 
-  summarise(total=n()) %>% 
-  arrange(desc(total)) %>% 
-  head(10)
+mutate(zip5 = str_sub(zip, start=1L, end=5L))
+
+top_10_ppp <- virginia_ppp_with_naics%>% 
+group_by(title) %>% 
+summarise(total=n()) %>% 
+arrange(desc(total)) %>% 
+head(10)
 
 
 all_fips <- fips_codes %>% as_tibble()
@@ -263,7 +283,7 @@ fips_and_naics <- virginia_ppp_with_naics %>%
   summarise(total=n()) %>% 
   arrange(desc(total))
 
-ccbps <- write_csv("C:\\Users\\kates\\Downloads\\cbp19co.zip")
+ccbps <- read_csv("C:\\Users\\kates\\Downloads\\cbp19co.csv")
 
 county_religion <- fips_and_naics %>% 
   filter(title == "Religious Organizations") 
