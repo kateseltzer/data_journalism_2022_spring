@@ -109,7 +109,13 @@ mutate(
   )
 )%>%
  group_by(loan_amounts) %>%
-  summarise(total = n())
+  summarise(total = n()) 
+
+va_loan_amounts <- va_loan_amounts %>% 
+  mutate(sum_total = sum(total)) %>% 
+   mutate(percent_loans = (total/sum_total)*100) %>% 
+  arrange(desc(percent_loans))
+ 
 ```
 
 ```{r}
@@ -136,7 +142,17 @@ va_cong_district <- virginia_ppp %>%
 
 
 **A1.** 
-In Virginia, the counties that received the greatest number of loans included Fairfax, Loudoun, Virginia Beach City, Prince William, Henrico, Chesterfield, Alexandria City, Richmond City, Arlington, and Norfolk City. There were 17 companies that received the maximum PPP loan amount of $10,000,000. Four companies in Fairfax County and Henrico County received that full $10 million.  
+In Virginia, the counties that received the greatest number of loans included Fairfax, Loudoun, Virginia Beach City, Prince William, Henrico, Chesterfield, Alexandria City, Richmond City, Arlington, and Norfolk City. There were 17 companies that received the maximum PPP loan amount of $10,000,000. Four companies in Fairfax County and Henrico County received that full $10 million. 
+
+The most populous counties in Virginia are (in order) Fairfax, Prince William, Virginia Beach City, Loudoun, Chesterfield, Henrico, Norfolk City, Chesapeake City, Arlington, and Richmond City. That roughly corresponds with where loans were heavily distributed, so no major surprises there.
+
+In the counties that received a maximum loan amount of $10 million, the median loan amounts were fairly close, indicating that none of those counties received a high number of very high or very low loan amounts. However, there was signficiant diversity in terms of loan count in those 17 counties -- cities like Williamsburg only received a few hundred loans, but at least one of those loans totaled $10 million.
+
+Loans between the amounts of $10,000 and $50,000 accounted for nearly half of all PPP loans in Virginia. Another quarter of the loans were for less than $10,000. Only about 3% of loans were over $500,000. 
+
+Eighty businesses in Virginia retained the maximum number of jobs (500) as a result of the PPP loan. That doesn't necessarily indicate a whole lot because the loans could be applied payroll costs, but also to a limited set of other expenses like mortgage interest, rent, utilities, but it's still worth noting.
+
+Virginia's 10th Congressional district in NOVA received the most loans, and its 9th Congressional district in the southwestern part of the state received the least. Those districts are represented by Democrat Jennifer Wexton and Republican Morgan Griffith, respectively.
 
 ## Geographic Analysis
 
@@ -185,6 +201,7 @@ virginia_ppp <- virginia_ppp %>%
 va_pop_by_zip <- get_acs(geography = "zcta",
               variables = c(totalpop = "B01001_001"),
               year = 2019,
+              state = "Virginia",
               geometry=TRUE) %>% 
   rename(pop_by_zip=estimate) %>% 
   rename(zip5=GEOID)
@@ -194,15 +211,25 @@ va_zip_ppp <- virginia_ppp %>%
   summarise(count=n()) %>% 
   arrange(desc(count))  
 
-
 zip_and_ppp <- va_pop_by_zip %>% 
-  left_join(va_zip_ppp, by="zip5")
-  
+  left_join(va_zip_ppp, by="zip5") %>% 
+  mutate(per_capita = count/pop_by_zip)
+
+ggplot() + 
+geom_sf(data=zip_and_ppp, aes(fill=per_capita)) + 
+theme_minimal()+
+scale_fill_viridis_b(option="magma",trans = "log")  
+
+lancaster_loans <- virginia_ppp %>% 
+  filter(project_county_name == "Lancaster") %>% 
+  arrange(desc(amount)) %>% 
+  head(10)
 
 ```
 
 
 **A2.** 
+There's not a ton of variation within the county map -- counties like Alleghany, Amherst, Byckingham, Wise, Dickenson, Pittsylvania, and Prince George received the fewest loans per capita, which doesn't seem shocking. Lancaster received the most loans per capita, and counties like Petersburg and Winchester also had more than their surrounding counties. Lancaster does seem like an odd pick for the county with the most loans per capita and could definitely be researched further. The company that received the greatest amount of PPP aid was New Tides LLC, which I hadn't heard of, but it operates as The Tides Inn, which I have heard of. It looks like they applied for and received PPP loans in both rounds. Rappahannock Westminster-Canterbury is a retirement community.
 
 ## Lender Analysis
 
@@ -241,14 +268,21 @@ loan_amts_and_lenders %>%
     mapping = aes(x = loan_amounts, y = count)
   )
 
+truist <- loan_amts_and_lenders %>% 
+  filter(lender == "Truist Bank")
 
+truist %>% 
+  ggplot()+
+  geom_point(
+    mapping = aes(x = loan_amounts, y = count)
+  )
 
   
 ```
 
 
 **A3.** 
-
+Virginia did not have any undisbursed loans. Truist distributed the most PPP loans, with about 7,000 distributed for between $10,000 and $50,000. The chart above shows that many of the loans are clustered in the amounts under $50,000. The second chart shows a very similar line to the first one, and reflects that the majority of its loans were between $10,000 and $50,000.
 
 
 
@@ -257,43 +291,76 @@ loan_amts_and_lenders %>%
 **Q4.** Write R code that examines industry patterns for PPP loans in your state, using the NAICS codes from the PPP data as a starting point. Generate statewide and county industry totals, then join that with 2018-19 data from the [Census County Business Patterns survey](https://www2.census.gov/programs-surveys/cbp/datasets/2019/cbp19co.zip) using 6-digit NAICS codes. The documentation explaining that data can be found here: https://www2.census.gov/programs-surveys/cbp/technical-documentation/records-layouts/2018_record_layouts/county-layout-2018.txt. To do this, you will need to add FIPS codes to your PPP dataset.
 
 ```{r}
+#read in naics codes
+
 naics_codes <- read_csv("C:\\Users\\kates\\OneDrive\\Documents\\GitHub\\data_journalism_2022_spring\\major_assignments\\state_assignment\\data\\naics_codes.csv")
 
-virginia_ppp_with_naics <- virginia_ppp %>% left_join(naics_codes, by="naics_code") %>% 
+#data frame with ppp and naics codes 
+virginia_ppp_with_naics <- virginia_ppp %>% 
+left_join(naics_codes, by="naics_code") %>% 
 mutate(zip5 = str_sub(zip, start=1L, end=5L))
 
+#data frame with top 10 industries in terms of loan count
 top_10_ppp <- virginia_ppp_with_naics%>% 
 group_by(title) %>% 
-summarise(total=n()) %>% 
-arrange(desc(total)) %>% 
+summarise(count=n()) %>% 
+arrange(desc(count)) %>% 
 head(10)
 
-
+#data frame with virginia fips codes
 all_fips <- fips_codes %>% as_tibble()
-
 va_fips <- all_fips %>% 
   filter(state == 'VA') %>% 
   mutate(county = str_to_title(county)) %>% 
-  mutate(county = str_remove_all(county, "County"))
+  mutate(county = str_remove_all(county, " County")) %>% 
+  mutate(fips_code = str_c(state_code, county_code))
 
+#data frame with fips codes and naics codes 
 fips_and_naics <- virginia_ppp_with_naics %>% 
   rename(county = project_county_name) %>% 
-  inner_join(va_fips, by=c("county")) %>% 
-  group_by(county, title) %>% 
-  summarise(total=n()) %>% 
-  arrange(desc(total))
+  inner_join(va_fips, by=c("county")) 
+  
+fips_and_naics %>% 
+  group_by(title) %>% 
+  summarise(count=n()) %>% 
+    arrange(desc(count)) %>% 
+head(10)
 
-ccbps <- read_csv("C:\\Users\\kates\\Downloads\\cbp19co.csv")
-
-county_religion <- fips_and_naics %>% 
-  filter(title == "Religious Organizations") 
+county_salons <- fips_and_naics %>% 
+  filter(title == "Beauty Salons") %>% 
+  group_by(county, fips_code) %>% 
+  summarise(count=n()) %>% 
+  arrange(desc(count))
   
 
-  
+ccbps <- read_csv("C:\\Users\\kates\\Downloads\\va_cbp.csv")
 
+ccbps_clean <- ccbps %>% 
+   filter(!str_detect(naics, "-")) %>% 
+   filter(!str_detect(naics, "/")) %>% 
+   filter(str_length(naics) == 6, fipstate == 51) %>% 
+   mutate(fips_code = str_c(fipstate, fipscty)) 
 
+ccbps_clean %>% 
+  group_by(naics) %>% 
+  summarise(count=n()) %>% 
+  arrange(desc(count)) %>% 
+  head(10)
 
+naics_by_county <- ccbps_clean %>% 
+   filter(naics == "812112", fipstate == 51) %>% 
+  group_by(fips_code) %>% 
+  summarise(total_biz = sum(est))
 
+beauty_salons_final <- full_join(
+  county_salons,
+  naics_by_county)
+
+beauty_salons_final <- beauty_salons_final %>% 
+  mutate(total_biz = replace_na(total_biz, 0)) %>% 
+  mutate(difference_loans_and_biz = count-total_biz)
+
+write_csv(beauty_salons_final, "beauty_salons_final.csv")
 ```
 
 
@@ -301,13 +368,14 @@ Does the distribution of PPP applications by the top 10 industries (by number of
 
 Create a county-level map showing the differences between the PPP applications and the Census business data for one of the top 10 industry codes. You can do this either using ggplot or Datawrapper (if the latter, publish that map and include the URL below).
 
-
-
 **A4.** 
-
+https://datawrapper.dwcdn.net/cCHQb/1/
+Although the top 10 industries were roughly the same for industries in Virginia and industries in Virginia that received PPP loans, there's a wide discrepancy between beauty salons that received loans and beauty salons the census says exists. As we discussed in class, there's a wide range of possibilities that could account for this discrepancy, including licensing and by-the-chair business models. 
 
 ## Summary
 
 **Q5.** What is the most promising story idea that you have found during this exploration? How would you approach reporting it out and what other information/data would you need to do that? What would be the minimum story you could get from this, and what would be the maximum story?
 
 **A5.**
+
+I think a really interesting story would be to compare race and household income against counties that received the most and least PPP loans, by count and by amount. At a maximum, that data could show that counties that are majority Black or majority low-income disproportionately received fewer or smaller amounts of PPP loans. The story should also take into account lenders and whether they more likely to approve or deny loans based on race and income -- at a maximum, that story would reveal systemic racism in PPP loan distribution (and that people at high levels knew about it). The minimum story to publish would show those discrepancies or would state that the PPP loan distribution is shockingly equitable. To accomplish this, I would need race and income data by county for Virginia, and I would also need better reported data regarding race in PPP loan applications, which we don't really have access to since the reporting process was so inconsistent.
